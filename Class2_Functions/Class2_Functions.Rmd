@@ -1,0 +1,1343 @@
+---
+title: "Class 2: Functions in R"
+author: "Koen Plevoets"
+date: "29-09-2020"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+---
+
+```{r cover, echo=FALSE, fig.align="center", out.width="85%"}
+knitr::include_graphics("Class2_Functions.png")
+```
+
+## Class 2: Functions in R
+
+- Chapter 5: **Functions**
+    - 5.1: **Arguments**
+    - 5.2: **Body**
+    - 5.3: **Environments**
+    - 5.4: **Binary operators** (TODO: move to Class3?)
+    - 5.5: **Replacement functions** (TODO: move to Class3?)
+- Chapter 6: **Control structures**
+
+## 5. Functions
+
+- Functions in R are the objects which can **do** things.
+- They are made up of (formal) **arguments** and a code **body**:
+
+```{r exampleFunction}
+fun1 <- function(a, b) {
+  3*a + 5*b
+}
+```
+
+- In fact, R functions have a third component, called the **environment**: see 5.3.
+
+## 5. Functions
+
+- There is a **meta-function** for each of the three components:
+
+```{r exampleThreeComponents}
+formals(fun1)
+body(fun1)
+environment(fun1)
+```
+
+- These meta-functions can also be used for setting (assigning) components.
+
+## 5. Functions
+
+- Two functions for handling arguments are more **convenience functions**:
+  - `args()`
+  - `formalArgs()`
+- The function `args()` returns the function without the body:
+
+```{r exampleArgs}
+args(fun1)
+```
+
+- The function `formalArgs()` is a shortcut for `names(formals( ))`:
+
+```{r exampleFormalArgs}
+formalArgs(fun1)
+```
+
+## 5. Functions
+
+- The **function definition** can always be retrieved by typing the function name **without brackets**:
+
+```{r exampleWithoutBrackets}
+fun1
+```
+
+- This can be useful for consulting (long) functions.
+
+## 5. Functions
+
+- All functions in R are objects of the class `function`.
+- The type of a function depends on whether the function is user-created or a "primitive" from R's `base` package:
+  - All user-created functions have the type `closure`.
+  - The "primitive" functions in the `base` package have either the type `builtin` or `special`.
+- Function types are not so relevant for programming purposes.
+
+## 5. Functions
+
+```{r exampleFunctionClasses}
+class(fun1)
+class(sqrt)
+class(sum)
+class(`{`)
+class(`if`)
+```
+
+## 5. Functions
+
+```{r exampleFunctionTypes}
+typeof(fun1)
+typeof(sqrt)
+typeof(sum)
+typeof(`{`)
+typeof(`if`)
+```
+
+## 5. Functions
+
+- The only relevance of function types is that the primitive functions have **no** `formals`, `body` or `environment`:
+
+```{r exampleBuiltinComponents}
+formals(sqrt)
+body(sqrt)
+environment(sqrt)
+```
+
+- The reason is that primitive functions are written in **C**.
+
+## 5. Functions
+
+```{r exampleSpecialComponents}
+formals(`{`)
+body(`{`)
+environment(`{`)
+```
+
+## 5. Functions
+
+- One can also see that primitive functions do not have a regular function definition by typing their name:
+
+```{r examplePrimitiveDefinition}
+sqrt
+`{`
+```
+
+- The `.Primitive` (sub)function is a pointer to C code.
+
+## 5.1 Arguments
+
+- The **formal** arguments are the variables listed in the function definition.
+- The **actual** arguments are the values given to them in a call to the function:
+
+```{r exampleActualArguments}
+fun1(a = 2, b = 3)
+```
+
+- In other words:
+  - The **formal** arguments of `fun1` are `a` and `b`.
+  - The **actual** arguments in the above call to `fun1` are `2` and `3` (respectively).
+
+## 5.1 Arguments
+
+- Formal arguments can have **default values**:
+  - These are the values which the function will use **unless** the user specifies a different value.
+  - If the user specifies an actual value, then this will **override** the default value.
+- This also means that arguments with default values can be omitted:
+
+```{r exampleDefaultValue}
+fun2 <- function(a = 1, b) {
+  3*a + 5*b
+}
+fun2(b = 3)
+fun2(a = 2, b = 3)
+```
+
+## 5.1 Arguments
+
+```{r exampleDefaultValues2}
+fun3 <- function(a = 1, b = 4) {
+  3*a + 5*b
+}
+fun3()
+fun3(a = 2, b = 3)
+```
+
+## 5.1 Arguments
+
+- Omitting arguments runs the risk of unexpected behavior, of course.
+- **Empty arguments** can be spotted with the function `missing()`:
+
+```{r exampleMissing}
+fun4 <- function(a = 1, b) {
+  if (missing(b)) {
+    print("Please provide a value for b since there is no default!")
+  } else {
+    3*a + 5*b
+  }
+}
+fun4()
+fun4(b = 3)
+```
+
+## 5.1 Arguments
+
+- QUESTION: what is the difference between `fun5()` and `fun6()`?
+
+```{r exampleMissingDefault}
+fun5 <- function(a, b) {
+  if (missing(a)) {
+    a <- 1
+  }
+  3*a + 5*b
+}
+
+fun6 <- function(a = 1, b) {
+  3*a + 5*b
+}
+```
+
+## 5.1 Arguments
+
+- QUESTION: what is the difference between `fun5()` and `fun6()`?
+
+```{r exampleMissingDefault2, ref.label="exampleMissingDefault"}
+
+```
+
+- It is best practice to specify default values!
+
+## 5.1 Arguments
+
+- R uses **lazy evaluation**:
+
+```
+Only retrieve the value of objects when they are needed (in a computation);
+pass over unevaluated expressions.
+```
+
+- This is the reason why the following `fun7()` does **not** produce an **error** when `a` > 4, even though `b` is missing:
+
+```{r exampleLazyEvaluation}
+fun7 <- function(a = 1, b) {
+  if (a > 4) {
+    3*a + 10
+  } else {
+    3*a + 5*b
+  }
+}
+fun7(a = 6)
+```
+
+## 5.1 Arguments
+
+```{r exampleLazyEvaluation2, error=TRUE}
+fun7()
+fun7(a = 2)
+fun7(b = 3)
+fun7(a = 2, b = 3)
+```
+
+## 5.1 Arguments
+
+- Lazy evaluation is also the reason why one argument can be specified **in terms of another**:
+
+```{r exampleArgumentsWithin}
+fun8 <- function(a = 1, b = a) {
+  3*a + 5*b
+}
+fun8()
+fun8(a = 2)
+fun8(b = 3)
+```
+
+- The order in which the arguments are specified does not even matter:
+
+## 5.1 Arguments
+
+```{r exampleArgumentsWithin2}
+fun9 <- function(a = b, b = 1) {  # Argument a in terms of b, which comes after a
+  3*a + 5*b
+}
+fun9()
+fun9(b = 3)
+fun9(a = 2)
+```
+
+## 5.1 Arguments
+
+- In order to **ensure** the **evaluation** of an argument, one can use the function `force()`:
+
+```{r exampleForcedEvaluation, error=TRUE}
+fun10 <- function(a = 1, b) {
+  force(b)  # Forces the evaluation of b (compare with fun7)
+  if (a > 4) {
+    3*a + 10
+  } else {
+    3*a + 5*b
+  }
+}
+fun10(a = 6)
+```
+
+- When this is useful depends on the situation.
+- Again, it is best practice to specify default values.
+
+## 5.1 Arguments
+
+- A **meta-function** takes another function as one of its arguments.
+- The function name before the opening bracket `(` can be used **variably**:
+
+```{r exampleFunctionArgument}
+fun11 <- function(vec, fun) {
+  fun(vec)
+}
+fun11(vec = c(3, 1, 2, 11, 10.5), fun = mean)
+fun11(vec = c(3, 1, 2, 11, 10.5), fun = median)
+```
+
+## 5.1 Arguments
+
+- The (formal) argument `...` matches any **remaining** (actual) arguments:
+  - It is typically the **final** (formal) argument in a function definition.
+  - It can match a **variable** amount of (actual) arguments.
+- It can only match (actual) arguments which are explicitly **named**:
+
+```{r exampleTripleDots}
+fun12 <- function(vec, ...) {
+  print(vec, ...)
+}
+fun12(vec = c(3, 1, 2, 11, 10.5), digits = 0)
+fun12(vec = c("hello", "world"), quote = FALSE, print.gap = 5)
+```
+
+## 5.1 Arguments
+
+```{r exampleTripleDots2}
+fun12(vec = c(3, 1, 2, NA, 10.5), na.print = "unknown")
+# Modify the meta-function:
+fun13 <- function(vec, fun, ...) {
+  fun(vec, ...)
+}
+fun13(vec = c(3, 1, 2, NA, 10.5), fun = mean)
+fun13(vec = c(3, 1, 2, NA, 10.5), fun = mean, na.rm = TRUE)
+```
+
+## 5.1 Arguments
+
+- A real issue with the `...` argument is that one has to check first which functions take which arguments!
+- In order to get more control over the (actual) arguments, one can capture `...` as a list and assign this to a (temporary) object:
+
+```{r exampleTripleDots3, eval=FALSE}
+fun14 <- function(vec, ...) {
+  tmp <- list(...)
+  # Some more code (omitted here)
+}
+```
+
+## 5.2 Body
+
+- The body needs to consist of lines of **executable R code**.
+- If the body contains only **one line**, then the braces `{` and `}` can be omitted.
+- Any object created within the body is a **local variable**:
+  - It exists only **temporarily** during the execution of (a call to) the function.
+  - It vanishes as soon as the the execution has ended.
+  - It does **not modify** an object created outside of the function.
+  - It can modify a **copy** of an object outside of the function.
+- The last evaluated command in the body is the **return value** of the function.
+
+## 5.2 Body
+
+- If the body contains only **one line**, then the braces `{` and `}` can be omitted:
+
+```{r exampleOneLine}
+fun1 <- function(a, b) 3*a + 5*b
+fun1
+fun1(a = 2, b = 3)
+```
+
+- However, it may be more readable to use the braces nonetheless.
+
+## 5.2 Body
+
+- Simple, one-line functions are often created as **anonymous functions**:
+  - These are functions which are **not assigned to a name**.
+  - They are created on the spot in e.g. **meta-functions**:
+
+```{r exampleAnonymous}
+fun13(vec = c(3, 1, 2, 11, 10), fun = function(x) sum(x^2) )
+```
+
+- When you have to use a function at various occasions, then it may be more convenient to assign it to a name.
+
+## 5.2 Body
+
+- Objects created within the body are **local variables** to the function.
+- That means that they **cannot be retrieved** after the execution of the function:
+
+```{r exampleNonRetrieval, error=TRUE}
+fun2 <- function(a, b) {
+  fst <- 3 * a
+  sec <- 5 * b
+  fst + sec
+}
+fun2(a = 2, b = 3)
+fst
+sec
+```
+
+## 5.2 Body
+
+- Local variables also imply that functions make **copies** of input objects.
+- This way, functions do **not modify** the input objects themselves:
+
+```{r exampleCopyObjects}
+fst <- 2
+fun2 <- function(a, b) {
+  fst <- 3 * a
+  sec <- 5 * b
+  fst + sec
+}
+fun2(a = fst, b = 3)
+fst
+```
+
+## 5.2 Body
+
+- Input objects can be modified with the "**superassignment**" operator `<<-`.
+- In fact, this creates objects **outside** of the function:
+
+```{r exampleGlobalAssignment}
+fun3 <- function(a, b) {
+  fst <<- 3 * a
+  sec <<- 5 * b
+  fst + sec
+}
+fst <- 2
+fun3(a = fst, b = 2)
+fst
+```
+
+- The general function for this is `assign()`, which will be covered in 5.3.
+
+## 5.2 Body
+
+- Functions with superassignment have **side effects**: next to computing a return value they also effect other changes.
+- Side effects are often a bad idea: know what you are doing!
+  - R deliberately works with **local variables** because input objects usually are data and the function returns a statistical result on them.
+  - In other words, local variables tie in with the idea of **reproducible research**.
+- The rules regarding the **scope** of variables will be clarified with **environments**: see 5.3.
+
+## 5.2 Body
+
+- The last evaluated command in the body is the **return value** of the function.
+- This is not necessarily the final code line in the body:
+
+```{r exampleReturnValue}
+fun4 <- function(a, b) {
+  if (a > 4) {
+    3*a + 10
+  } else {
+    3*a + 5*b
+  }
+}
+fun4(a = 2, b = 3)
+fun4(a = 6, b = 3)
+```
+
+## 5.2 Body
+
+- Return values can also be explicitly stated with the function `return()`.
+- However, there is disagreement whether this is neccessary: Matloff (2011: 148) discusses the pros and cons.
+
+## 5.2 Body
+
+TODO: next to return values, there is also:
+
+- `invisible()`
+- `on.exit()`
+
+## 5.2 Body
+
+- Return values can also be produced **invisibly** with the function `invisible()`.
+- This still creates a return value, but it will not be printed in the console:
+
+```{r exampleInvisible}
+fun5 <- function(a, b) {
+  invisible(3*a + 5*b)
+}
+fun5(a = 2, b = 3)
+out <- fun5(a = 2, b = 3)
+out
+```
+
+## 5.2 Body
+
+- The `invisible()` function is often the **final command** in **graphical functions** (i.e. functions which produce graphical output).
+- In that case, it is typically used without an argument (which produces a `NULL` value):
+
+```{r exampleInvisiblePlotting, eval=FALSE}
+fun6 <- function(a, b, ...) {
+  # Some code (omitted here)
+  plot(a, b, ...)
+  invisible()
+}
+```
+
+## 5.2 Body
+
+- You can specify what will happen at the end of an execution with the function `on.exit()`:
+
+```{r exampleOnExit}
+fun7 <- function(a, b) {
+  on.exit(print("You've just done a neat computation!"))
+  3*a + 5*b
+}
+out <- fun7(a = 2, b = 3)
+out
+```
+
+- If your function contains more than one `on.exit()` command, then you need to specify them with the argument `add = TRUE`.
+
+## 5.2 Body
+
+- The `on.exit()` function is typically used for **clean-up actions**: e.g. (re)setting graphical or system parameters:
+
+```{r exampleCleanUp, eval=FALSE}
+fun8 <- function(a, b) {
+  oldPar <- par(oma = c(1, 1, 1, 1))
+  on.exit(par(oldPar))
+  # Some code (omitted here)
+  oldDir <- getwd()
+  on.exit(setwd(oldDir), add = TRUE)
+  # Some more code (omitted here)
+}
+```
+
+- These are side effects, of course!
+
+## 5.2 Body
+
+- Finally, an R function can also be defined **recursively**:
+
+```{r exampleRecursion}
+fun9 <- function(a, b) {
+  if (a <= b) {
+    a <- 1
+  } else {
+    a <- a * fun9(a - 1, b)
+  }
+  a
+}
+fun9(5, 2)
+```
+
+- Matloff (2011: 177) remarks that recursive functions are not so transparent.
+
+## 5.3 Environments
+
+- **Environments** are R's way of keeping track of where objects can be **found**.
+- E.g. modify the object definition in Class 1: objects are bindings of names to values of a certain type **within a specific environment**.
+- This is why `fun1()` in the following example is able to find object `b`:
+
+```{r exampleGlobalScope}
+b <- 3
+fun1 <- function(a) {
+  3*a + 5*b
+}
+fun1(a = 2)
+```
+
+- IMPORTANT: the environment of an object is the environment in which it is **created** (see later)!
+
+## 5.3 Environments
+
+- When an object is created in the console, its environment is the **global environment**:
+  - R **prints** it as `R_GlobalEnv`.
+  - It can be accessed with the **object** `.GlobalEnv`.
+  - It can be accessed with the **function** `globalenv()`.
+- The function `ls()` or `objects()` return the names of all objects in the environment specified with the argument `envir`:
+
+```{r exampleLS1, eval=FALSE}
+ls(envir = .GlobalEnv)
+## [1] "b"    "fun1"
+```
+
+- By the way, the function `ls.str()` applies the `str()` function to every object found by `ls()`.
+
+## 5.3 Environments
+
+- We have seen in 5.2 that **local variables** cannot be accessed outside of a function.
+- All of this is related to **environments**:
+
+```
+During the execution of a function, R creates a new, temporary environment
+in which all the local variables are bound.
+```
+
+- At the end of the execution:
+  - The **return value** of the function is **passed to** the environment from which the function was **called**.
+  - The **temporary environment** is **deleted**.
+
+## 5.3 Environments
+
+- We can illustrate environments with the `environment()` function (see the introduction of this chapter).
+- If called without any argument, it returns the environment in which it is called:
+
+```{r exampleCurrentEnvironment}
+environment()
+environment()
+```
+
+## 5.3 Environments
+
+- Hence, we can make a toy function which simply **prints** the **temporary environment**:
+
+```{r exampleEnvironmentFunction}
+fun3 <- function() {
+  print(environment())
+}
+fun3()
+fun3()
+```
+
+- We see:
+  - The temporary environment is an **anonymous environment** referred to by its **memory location**.
+  - It is **different each time** the function (`fun3()`) is called.
+
+## 5.3 Environments
+
+- Similarly, we can make a toy function which **lists the objects** in the **temporary environment**:
+
+```{r exampleLsFunction}
+b <- 3
+fun4 <- function(a) {
+  d <- 4
+  print(ls.str())
+}
+fun4(a = 2)
+fun4(a = 1)
+```
+
+- The temporary environment consists of all the **local variables**.
+
+## 5.3 Environments
+
+- By the same token, function `fun6()` in the following example has access to all the **local variables** of `fun5()` plus all the **global variables**:
+
+```{r exampleEnclosedFunction}
+b <- 3
+fun5 <- function(a) {
+  d <- 4
+  fun6 <- function(c) {
+    d + 3*c + 5*b
+  }
+  fun6(c = a)
+}
+fun5(a = 2)
+```
+
+- Function `fun6()` is defined within `fun5()`.
+- Hence, the environment of `fun6()` is **enclosed** in the environment of `fun5()`.
+
+## 5.3 Environments
+
+- The environment of an enclosed function like `fun6()` is the **temporary execution environment** of `fun5()`:
+
+```{r exampleEnclosedEnvironment}
+b <- 3
+fun5 <- function(a) {
+  d <- 4
+  fun6 <- function(c) {
+    d + 3*c + 5*b
+  }
+  print(environment(fun6)) # Here fun5() prints the environment of fun6().
+}
+fun5(a = 2)
+fun5(a = 2)
+```
+
+- This shows that environments are **nested**.
+
+## 5.3 Environments
+
+- The nesting of environments explains how functions can **access**/**find** objects:
+
+```
+Every environment can access the objects in its enclosing environment.
+(But not in its enclosed environments)
+```
+
+- The **enclosing** environment is sometimes also called the **parent** environment:
+
+```
+Every environment can access the objects in its parent environment.
+(But not in its children environments)
+```
+
+## 5.3 Environments
+
+- The nesting of environments can be illustrated with the functions `exists()` and `get()`:
+  - `exists()` returns `TRUE` if a certain name is bound to a value in a certain environment.
+  - `get()` returns the value of a name in an environment.
+- The next two slides use them in a toy function (`fun7()`):
+
+## 5.3 Environments
+
+```{r exampleExistsFunction}
+b <- 3
+fun7 <- function(a) {
+  d <- 4
+  fun8 <- function(e) {
+    d + 3*e + 5*b
+  }
+  exists(a, envir = environment())
+}
+fun7(a = "d")
+fun7(a = "b")
+fun7(a = "e")
+```
+
+## 5.3 Environments
+
+```{r exampleGetFunction, error=TRUE}
+b <- 3
+fun7 <- function(a) {
+  d <- 4
+  fun8 <- function(e) {
+    d + 3*e + 5*b
+  }
+  get(a, envir = environment())
+}
+fun7(a = "d")
+fun7(a = "b")
+fun7(a = "e")
+```
+
+## 5.3 Environments
+
+- Environments can also be nested "beyond" the global environment.
+- All the parents of the global environment form the **search path** in R:
+
+```{r exampleSearchPath}
+search()
+```
+
+- The `search()` function returns a character vector, but the **order of the elements** is the order in which R looks for (bindings of) objects.
+
+## 5.3 Environments
+
+- Environments are related to **packages**.
+- When you call an object (e.g. function), R consecutively looks through all the packages on the search path to find its binding:
+
+```{r exampleSearchFunctions}
+environment(mean)
+environment(var)
+```
+
+## 5.3 Environments
+
+- When you **load**/**attach** a package, it becomes the **parent** of the **global environment**.
+- All the other packages on the search path **shift one position**:
+
+```{r exampleSearchModified}
+library(MASS)
+search()
+library(nnet)
+search()
+```
+
+## 5.3 Environments
+
+- It is very important to distinguish between:
+  - The environment in which function is **created** (**defined**).
+  - The environment in which a function is **called** (**executed**).
+- Everything that has been said up to now applies **only to the first kind**:
+  - The value of the `environment()` function.
+  - The hierarchical search path of nested environments.
+
+## 5.3 Environments
+
+- That is the reason why the following example does not work:
+
+```{r exampleNonEnclosedFunction, error=TRUE}
+b <- 3
+fun5 <- function(a) {
+  d <- 4
+  fun6(c = a)
+}
+fun6 <- function(c) {
+  d + 3*c + 5*b
+}
+fun5(a = 2)
+```
+
+- The function `fun6()` is defined in the global environment (instead of within `fun5()`).
+- The **temporary execution environment** of `fun5(a = 2)` is a **child** of the global environment, **not its parent**, so the object `d` is never found.
+
+## 5.3 Environments
+
+- The function `parent.env()` gives the **parent/enclosing environment** of an environment (on the search path).
+- The function `parent.frame()` gives the **calling environment** (i.e. the environment from which a function was called/executed).
+
+## 5.3 Environments
+
+- The `parent.env()` function has an argument `env` for selecting a specific environment:
+
+```{r exampleParentEnv}
+parent.env(env = .GlobalEnv)
+parent.env(env = as.environment("package:stats"))
+```
+
+- The `env` argument has no default.
+
+## 5.3 Environments
+
+- Another toy function which prints both the **temporary environment** and its **parent**:
+
+```{r exampleParentFunction}
+fun7 <- function() {
+  tmp <- environment()
+  print(tmp)
+  print(parent.env(env = tmp))
+}
+fun7()
+```
+
+- Of course, the parent of ordinary user-defined functions is the global environment.
+
+## 5.3 Environments
+
+- The global environment is also the **calling environment** for interactive commands:
+
+```{r exampleCallingFunction}
+fun8 <- function() {
+  tmp <- parent.frame()
+  print(tmp)
+}
+fun8()
+```
+
+- The `parent.frame()` function always applies to the **current (temporary) environment**, so it needs **no** `env` argument:
+  - It has an argument `n` for specifying how many (nested) calls one wants to go back (the default is `1`).
+  - The sequence of nested calls is called the **call stack**.
+
+## 5.3 Environments
+
+- The difference between **parent/enclosing** environments and **calling** environments becomes clear for **nested** function calls.
+- When one function is both **created** and **called** within another function, there is again no difference:
+
+```{r exampleCallingEnclosed}
+fun9 <- function() {
+  fun10 <- function() {
+    tmp <- environment()
+    print(parent.env(env = tmp))
+    print(parent.frame())
+  }
+  fun10()
+}
+fun9()
+```
+
+## 5.3 Environments
+
+- However, the difference shows up when one function is **called** but **not created** in another function:
+
+```{r exampleCallingNonEnclosed}
+fun9 <- function() {
+  fun10()
+}
+fun10 <- function() {
+  tmp <- environment()
+  print(parent.env(env = tmp))
+  print(parent.frame())
+}
+fun9()
+```
+
+- Remember, R's scoping rules for variable look-up only relate to **parent/enclosing** environments, not to **calling** environments.
+
+## 5.3 Environments
+
+- So, how to ensure that objects will always be found?
+
+```{r exampleNonEnclosedFunction2, ref.label="exampleNonEnclosedFunction", error=TRUE}
+
+```
+
+- Two solutions:
+  - Create a function **within** another function (as before).
+  - Specify **local variables** as **formal arguments**.
+
+## 5.3 Environments
+
+```{r exampleNonEnclosedFunction3}
+b <- 3
+fun5 <- function(a, b) {    # Local variables a and b are formal arguments.
+  d <- 4
+  fun6(c = a, b = b, d = d)
+}
+fun6 <- function(c, b, d) { # Local variables c, b and d are formal arguments.
+  d + 3*c + 5*b
+}
+fun5(a = 2, b = b)
+```
+
+## 5.3 Environments
+
+- In addition, R has some other functions to manage the search path.
+- E.g. the function `baseenv()` accesses the `base` environment:
+
+```{r exampleBaseEnv}
+baseenv()
+```
+
+- The `base` environment is **not** the "root" of the search path, since its parent is the **empty environment**:
+
+```{r exampleParentBase}
+parent.env(env = baseenv())
+```
+
+## 5.3 Environments
+
+- The empty environment can be accessed with the function `emptyenv()`:
+
+```{r exampleEmptyEnv}
+emptyenv()
+```
+
+- It has **no** parent/enclosing environment and contains **no** objects:
+
+```{r exampleRootEnv, error=TRUE}
+parent.env(env = emptyenv())
+ls(envir = emptyenv())
+```
+
+## 5.3 Environments
+
+- Environments can also be created with the function `new.env()`.
+- Environments objects can be indexed with the `$` or the `[[` operator, as long as the indexes are **named**:
+
+```{r exampleNewEnv}
+env1 <- new.env()
+typeof(env1)
+env1$one <- 5:1
+env1[["two"]] <- c("aa", "bb", "cc", "dd", "ee")
+ls.str(envir = env1)
+env1
+```
+
+## 5.3 Environments
+
+- Removal of objects from environments has to be done with the function `rm()`:
+
+```{r exampleRmFunction}
+rm("one", envir = env1)
+ls.str(envir = env1)
+```
+
+- All other functions for environments work for user-defined environments:
+
+```{r exampleNewEnvFunctions}
+parent.env(env1)
+exists("two", envir = env1)
+get("two", envir = env1)
+```
+
+## 5.3 Environments
+
+- The function `assign()` is the generalized function for `<-` and `<<-`.
+- It assign a value to a name in a specified environment:
+
+```{r exampleAssignFunction}
+assign("tri", c("hello", "world"), envir = env1)
+ls.str(envir = env1)
+```
+
+## 5.3 Environments
+
+- Now that we know environments, the search path etc., we can fully explain the actual behaviour of `<<-`.
+- When called, the `<<-` operator **searches through** the whole **search path** to find a name matching its lef-hand side:
+  - If it finds a name, then it overrides its value by the right-hand side.
+  - If it finds no name, then, it creates a (new) object in the **global environment**.
+
+## 5.3 Environments
+
+- Note, environments are **not** lists:
+  - Numeric indexes are not possible (by definition, environments are bindings of names to values).
+  - Removal of object by setting them equal to `NULL` is not possible.
+  - Applying a function to an environment does **not** create a **local copy** of the environment but in fact **modifies the environment itself**:
+
+```{r exampleReferenceSemantics}
+fun1 <- function(e) {
+  e$tri <- "goodbye!"
+}
+fun1(e = env1)
+ls.str(envir = env1)
+```
+
+- This last property is called **reference semantics** (see Class _6_).
+
+## 5.4 Binary operators
+
+- You can define **binary operators** in R just like ordinary functions:
+  - The only restriction is that their **names** must **begin** and **end** with a `%`.
+  - Because `%` is a special symbol in R, the name needs to be wrapped in **backticks** (i.e. `):
+
+```{r exampleBinary}
+`%fun1%` <- function(a, b) {
+  3*a + 5*b
+}
+2 %fun1% 3
+6 %fun1% 1
+```
+
+- Wickham (2019: 137) calls binary operators **infix functions**.
+
+## 5.4 Binary operators
+
+- In fact, all the usual binary operators in R such as `+`, `*`, `-` etc. or `<=`, `>` etc. and even `<-` are **short-hand notations** for underlying functions:
+
+```{r examplePrimitiveBinary}
+2 + 3
+`+`(2, 3)
+2 < 3
+`<`(2, 3)
+```
+
+- This is an implementation of Chambers' `Function` principle.
+
+## 5.5 Replacement functions
+
+- In Class 1 we saw that values can be **assigned** to the outcome of certain functions (or operators):
+
+```{r examplePrimitiveReplacement}
+v1 <- c(2, 1, 3, 11, 10)
+names(v1) <- c("aa", "bb", "cc", "dd", "ee")
+class(v1) <- "jabberwocky"
+v1
+```
+
+- This is possible because these functions (and operators) correspond to **replacement functions**.
+
+## 5.5 Replacement functions
+
+- Whenever R sees a function/operator on the **left-hand** side of the assignment operator `<-`, R will execute **another** function:
+  - It starts with the **same name** as the function/operator on the left-hand side.
+  - It has the **suffix** `<-`:
+
+```{r examplePrimitiveSuffix}
+`names<-`
+`class<-`
+```
+
+- These are R's **replacement functions**.
+
+## 5.5 Replacement functions
+
+- R **assigns** the outcome of these replacement functions back to the **input object**.
+- In other words, R actually executes the following commands:
+
+```{r exampleUnderlyingReplacement}
+v2 <- c(2, 1, 3, 11, 10)
+v2 <- `names<-`(x = v2, values = c("aa", "bb", "cc", "dd", "ee"))
+v2 <- `class<-`(x = v2, values = "jabberwocky")
+v2
+identical(v1, v2)
+```
+
+## 5.5 Replacement functions
+
+- You can create replacement functions yourself:
+  - It should have at least the **arguments** `x` and `value`.
+  - Its **name** can be any regular function name, but it must **end on** (the suffix) `<-`.
+- E.g. a function `bandersnatch()` which sets an attribute `frumious`:
+
+```{r exampleReplacement}
+`bandersnatch<-` <- function(x, value) {
+  attr(x, which = "frumious") <- value
+  x
+}
+v3 <- c(2, 1, 3, 11, 10)
+bandersnatch(v3) <- "humpty"
+v3
+```
+
+## 5.5 Replacement functions
+
+```{r exampleReplacement2}
+bandersnatch(v3) <- "dumpty"
+v3
+bandersnatch(v3) <- "tweedledum"
+v3
+bandersnatch(v3) <- "tweedledee"
+v3
+```
+
+## 5.5 Replacement functions
+
+- A replacement function which only changes the second element of a vector:
+
+```{r exampleReplacementSecond}
+`second<-` <- function(x, value) {
+  x[2] <- value
+  x
+}
+second(v3) <- 60
+v3
+v4 <- 5:1
+second(v4) <- 90
+v4
+```
+
+- Taken from Wickham (2019: 138).
+
+## 5.5 Replacement functions
+
+- Replacement functions are what comes closest in R to in-place modification.
+- However, this is only an appearance because R actually **overwrites** the whole input object, as we have seen:
+
+```{r exampleReplacementOverwrite, eval=FALSE}
+v3 <- `bandersnatch<-`(x = v3, value = "tweedledee")
+v4 <- `second<-`(x = v4, value = 90)
+# Etc.
+```
+
+- The advantage of replacement functions is that they make code **user-friendly**.
+
+## 5.5 Replacement functions
+
+- By the way, the **index operators** `[`, `[[` and `$` also correspond to underlying functions:
+
+```{r exampleUnderlyingIndex}
+v4[2]
+`[`(v4, 2)
+```
+
+- This is another implementation of the `Function` principle.
+
+## 5.5 Replacement functions
+
+```{r exampleUnderlyingIndex2}
+lst5 <- list(mad = "hatter", march = "hare", dor = "mouse")
+lst5[[3]]
+`[[`(lst5, 3)
+lst5$march
+`$`(lst5, "march")
+```
+
+## 5.5 Replacement functions
+
+- Similarly, **assignment to indexes** corresponds to replacement functions:
+
+```{r exampleIndexReplacement}
+v4[2] <- -10
+v4
+v5 <- 5:1
+v5 <- `[<-`(v5, 2, -10)
+v5
+`[<-`
+```
+
+- This is in fact what motivated Wickham's `second()` example.
+
+## 5.5 Replacement functions
+
+```{r exampleIndexReplacement2}
+lst5[[1]] <- "Hatta"
+lst5$march <- "Haigha"
+lst5
+`[[<-`
+`$<-`
+```
+
+## 5.5 Replacement functions
+
+- By the same logic, there is an underlying function for the **assignment operator** `<-` (as well as `<<-`):
+
+```{r exampleUnderlyingAssignment}
+`<-`
+`<-`(v6, 5:1)
+v6
+```
+
+- This function creates the **name** specified as its **first argument** (with the **value** specified by its **second argument**).
+- This works by **modifying** the **environment** in the same way as `assign()` does.
+
+## 6. Control structures
+
+- Most people know `if`, `for` and `while`.
+- We will cover some additional features.
+
+## 6. Control structures
+
+- An `if` statement executes code if a certain logical expression is `TRUE`:
+
+```{r exampleIf}
+v1 <- 3
+if (v1 > 2) {
+  print("hello!")
+}
+if (v1 <= 2) {
+  print("nope!")
+} 
+```
+
+- It can be but does not have to combined with an `else` statement.
+
+## 6. Control structures
+
+```{r exampleIf2}
+# Compare:
+v1 <- 2
+if (v1 > 2) {
+  print("hello!")
+} else {
+  print("nope!")
+} 
+
+```
+
+## 6. Control structures
+
+- A `for` loop iterates over the elements in a vector (atomic or recursive).
+- The iteration can be done directly on the elements or by means of indexes:
+
+```{r exampleFor}
+v2 <- c(2, 1, 3, 11, 10)
+for (i in v2) {
+  print(i)
+}
+```
+
+## 6. Control structures
+
+```{r exampleFor2}
+# Compare:
+v2 <- c(2, 1, 3, 11, 10)
+for (i in 1:length(v2)) {
+  print(v2[i])
+}
+```
+
+## 6. Control structures
+
+- A `while` loop is the combination of an `if` statement and a `for` loop.
+- Pay attention not to create an eternal loop!
+
+```{r exampleWhile}
+v2 <- c(2, 1, 3, 11, 10)
+i <- 1
+while (v2[i] < 11) {
+  print(v2[i])
+  i <- i + 1
+}
+```
+
+## 6. Control structures
+
+- The statements `break` or `next` enable control over `for` and `while` loops :
+  - A `break` statement breaks out of the loop.
+  - A `next` statement goes to the next step in the iteration:
+
+```{r exampleBreakNext}
+v2 <- c(2, 1, 3, 11, 10)
+for (i in v2) {
+  if (i == 11) {
+    break
+  }
+  if (i == 1) {
+    next
+  }
+  print(i)
+}
+```
+
+## 6. Control structures
+
+- A `break` (and `next`) expression can also be used in a `repeat` loop.
+- This is equivalent to a `while` loop:
+
+```{r exampleRepeat}
+v2 <- c(2, 1, 3, 11, 10)
+i <- 1
+repeat {
+  print(v2[i])
+  i <- i + 1
+  if (v2[i] >= 11) {
+    break
+  }
+}
+```
+
+## 6. Control structures
+
+- The logical expressions in `if` statements and `while` loops can be combined with **Boolean operators**.
+- These need to be the **double** operators `&&` or `||`:
+  - Control structures such as `if` or `while` can only handle **single** `TRUE` or `FALSE` values, not vectors.
+  - The double operators are **not vectorized**:
+
+```{r exampleDoubleBoolean}
+v3 <- 2
+v4 <- 11
+if (v3 < 3 && v4 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+```{r exampleDoubleBoolean2}
+v3 <- 2
+v4 <- 11
+if (v3 == 3 || v4 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+- QUESTION: why does the following code not produce an error?
+
+```{r exampleLazyDouble}
+v5 <- 3
+if (v5 == 3 || v6 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+- QUESTION: why does the following code not produce an error?
+
+```{r exampleLazyDouble2, ref.label="exampleLazyDouble"}
+
+```
+
+- Boolean operators also make use of **lazy evaluation**.
+
+## 6. Control structures
+
+- In accordance with the `Function` principle, control structures correspond to underlying functions:
+
+```{r exampleControlFunctions}
+v5 <- 2
+`if`(v5 == 2, { print("hello!") })
+`if`(v5 == 3, { print("hello!") })
+
+v6 <- c(2, 1, 3, 11, 10)
+`for`(i, 1:length(v6), { print(v6[i]) })
+```
