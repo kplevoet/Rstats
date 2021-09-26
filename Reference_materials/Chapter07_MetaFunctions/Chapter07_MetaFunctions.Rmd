@@ -1,0 +1,213 @@
+---
+title: "Chapter 7: Meta-functions"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 7. Meta-functions
+
+- 7.1: **The apply family**
+- 7.2: **Some other meta-functions**
+
+## 7. Meta-functions
+
+- R has various **meta-functions** in to to make computations **vectorized**:
+  - The apply family
+  - Higher-order functions for functional programming
+  - ...
+- We discuss the higher-order functions together with some of R's other meta-functions.
+
+## 7.1 The apply family
+
+- Many loops over data can be implemented with the **apply family** of meta-functions:
+  - `apply()`
+  - `lapply()`, `sapply()` and `vapply()`
+  - `mapply()`
+  - `tapply()`
+  - ...
+- These meta-functions are **not** necessarily faster than loops: see Chapter 15!
+- These meta-functions can be used with an existing function or with an anonymous function (see 5.2).
+- They all have a `...` argument which can take arguments for the specified function.
+
+## 7.1 The apply family
+
+- The `apply()` function applies a function over a certain dimension or `MARGIN` of an array:
+
+```{r exampleApply}
+m1 <- matrix(15:1, nrow = 3)
+m1
+apply(m1, 1, sum)
+apply(m1, 2, mean)
+```
+
+- This can also be the rows or columns of a **data frame**.
+
+## 7.1 The apply family
+
+```{r exampleApply2}
+head(iris)
+apply(iris[, -5], 2, mean)
+apply(iris[, -5], 2, sd)
+```
+
+## 7.1 The apply family
+
+- The `lapply()` function applies a function over all components of a **list**:
+
+```{r exampleLapply}
+lst2 <- list(c(2, 1, 3, 11, 10), c(34, 32, 33, 31), c(101, 1001, 10101))
+lapply(lst2, mean)
+```
+
+- Because data frames are lists, `lapply()` can also be used for the columns of a data frame.
+
+## 7.1 The apply family
+
+```{r exampleLapply2}
+lapply(iris[, -5], sd)
+```
+
+## 7.1 The apply family
+
+- The `sapply()` function does the same as `lapply()` but it tries to **simplify** the return value to a vector/matrix/array:
+
+```{r exampleSapply}
+sapply(lst2, mean)
+```
+
+- The exact behavior of `sapply()` can be controlled with the arguments `simplify` and `USE.NAMES`: see `help(sapply)`.
+
+## 7.1 The apply family
+
+- The `vapply()` function does the same as `sapply()` but it takes a third argument in which you can **pre-specify** the **type** and **length** of the (separate) return values:
+
+```{r exampleVapply}
+vapply(lst2, mean, numeric(1))
+```
+
+- In fact, `vapply()` implements the idea of first creating an **empty vector** in which the outcome values will be stored (see 1.4):
+
+```{r exampleVapply2}
+out <- vector(mode = "numeric", length = length(lst2))
+for (i in 1:length(lst2)) {
+  out[i] <- mean(lst2[[i]])
+}
+out
+```
+
+## 7.1 The apply family
+
+- The `mapply()` function is the **multivariate** version of `sapply()`.
+- The **function** should be the **first argument**:
+
+```{r exampleMapply}
+v3 <- c(2, 1, 3, 11, 10)
+v4 <- c(15, 13, 14, 11, 12)
+mapply(sum, v3, v4)
+```
+
+## 7.1 The apply family
+
+- The function `Map()` is a wrapper for `mapply()`.
+- It returns the outcome as a list:
+
+```{r exampleMap2}
+Map(sum, v3, v4)
+```
+
+## 7.1 The apply family
+
+- The `tapply()` function applies a function over **groups** in data.
+- The groups are typically denoted by a **factor** or a **data frame of factors**:
+
+```{r exampleTapply}
+tapply(iris$Sepal.Length, iris$Species, mean)
+```
+
+- A grouped dataset is also called a "**ragged array**".
+
+## 7.1 The apply family
+
+- The `tapply()` function is the underlying function for:
+  - `by()`
+  - `aggregate()`
+- The `tapply()` function implements the **split-apply-combine** methodology.
+
+## 7.1 The apply family
+
+- The apply family has more members:
+  - `rapply()`: apply a function **recursively**.
+  - `eapply()`: apply a function over **environments**.
+  - ...
+- We will not cover these here (see their help page).
+
+## 7.2 Some other meta-functions
+
+- The `apply()` function is often used together with the function `sweep()`.
+- The idea is to "carry" some values through an array across a certain margin:
+
+```{r exampleSweep3}
+m1
+apply(m1, 2, mean)
+sweep(m1, 2, apply(m1, 2, mean), `-`)
+```
+
+## 7.2 Some other meta-functions
+
+- The function `outer()` by default computes the **outer product** of two arrays.
+- However, it can also be used to generate all possible combinations of values:
+
+```{r exampleOuter1}
+v3
+v4
+outer(v3, v4)
+```
+
+## 7.2 Some other meta-functions
+
+```{r exampleOuter2}
+v3 <- c("three", "four", "five")
+v4 <- c("apples", "pears", "oranges", "bananas")
+outer(v3, v4, paste, sep = " ")
+```
+
+## 7.2 Some other meta-functions
+
+- The `Reduce()` function enables the (recursive) use of **binary operators** on **more than two objects**:
+
+```{r exampleReduce}
+v3 <- c(2, 1, 3, 11, 10)
+v4 <- c(15, 13, 14, 11, 12)
+v5 <- c(9, 99, 900, 909, 999)
+Reduce(`+`, list(v3, v4, v5))
+```
+
+- This is known as **fold** in Haskell and **reduce** in Common Lisp.
+- The exact behavior of the `Reduce()` function can be controlled with the arguments `init`, `right` and `accumulate`: see `help(Reduce)`.
+
+## 7.2 Some other meta-functions
+
+- The `Reduce()` function is in fact a typical example of higher-order functions in **functional programming**:
+  - `Filter()`
+  - `Find()`
+  - `Position()`
+  - `Negate()`
+  - `Map()` (see above)
+- We will not cover these here (see their help page).
+
+## 7.2 Some other meta-functions
+
+- The `do.call()` function applies a function on the arguments specified as a list:
+
+```{r exampleDoCall}
+do.call(what = "rbind", args = list(v3, v4, v5))
+```
+
+- This is in fact an example of **computing on the language**: see Chapter 12.

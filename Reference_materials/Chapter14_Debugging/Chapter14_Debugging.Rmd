@@ -1,0 +1,120 @@
+---
+title: "Chapter 14: Debugging"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 14. Debugging
+
+- When your script raises **errors** or **warnings**, you have to find the problem(s).
+- This process of **debugging** is usually one of **trial and error**.
+- However, you can also raise problems in your functions:
+  - The function `stop()` raises an **error** which you specify.
+  - The function `warning()` raises a **warning** which you specify.
+  - The function `message()` raises an informative **message** which you specify.
+- The functions `stop()` and `warning()` have a logical argument `call.` which specifies whether **meta-information** on the call should be added (by default, `TRUE`).
+
+## 14. Debugging
+
+```{r exampleMessages}
+fun12 <- function(x) {
+  if (x > 3) {
+    stop("no, this number is too big!", call. = FALSE)
+  }
+}
+
+fun13 <- function(x) {
+  if (x > 3) {
+    warning("watch out, this number may be too big!", call. = FALSE)
+  }
+}
+
+fun14 <- function(x) {
+  if (x > 3) {
+    message("okay, but this number is rather big!")
+  }
+}
+```
+
+## 14. Debugging
+
+```{r exampleMessages2, error=TRUE, warning=TRUE}
+fun12(x = 4)
+fun13(x = 4)
+fun14(x = 4)
+```
+
+- There is also the function `stopifnot()` to raise an error if a certain condition is not met.
+- Conditions can also be specified with the various functions for **condition handling**: see `help(conditions)`.
+
+## 14. Debugging
+
+- The usual way to debug R functions is to add the function `browser()` somewhere in the body.
+- When the function is executed, the `browser()` function lets you **interact** with the function:
+  - The execution is temporarily suspended.
+  - You can inspect the (execution) environment of the call.
+
+```{r exampleBrowser}
+a <- 4
+fun15 <- function(x) {
+  b <- 5
+  browser()
+  x + a + b
+}
+```
+
+## 14. Debugging
+
+```{r exampleBrowser2, eval=FALSE}
+fun15(x = 3)
+## Called from: fun15(x = 3)
+Browse[1]>
+```
+
+- In this browser, you can type the names of objects to see their values (e.g. `a` or `b`).
+- You can type `c`, or `n` etc. to execute the remaining commands: see `help(browser)`.
+
+## 14. Debugging
+
+- The function `debug()` adds a `browser()` command at the beginning of a body.
+- The function `undebug()` removes it (again).
+
+```{r exampleDebug}
+fun16 <- function(x) {
+  y <- 4
+  x + y
+}
+debug(fun16)
+```
+
+## 14. Debugging
+
+```{r exampleDebug2, eval=FALSE}
+fun16(x = 3)
+## debugging in: fun16(x = 3)
+## debug at #1: {
+##    y <- 4
+##    x + y
+## }
+Browse[1]>
+```
+
+```{r exampleUndebug}
+undebug(fun16)
+fun16(x = 3)
+```
+
+## 14. Debugging
+
+- The function `debugonce()` combines `debug()` and `undebug()` for one call.
+- The function `debugger()` and `recover()` provide even more flexibility...
+- The function `traceback()` gives the **call stack** of **nested calls**:
+  - This is the sequence of calls (in reverse order) up until the error.
+  - This is rarely useful.

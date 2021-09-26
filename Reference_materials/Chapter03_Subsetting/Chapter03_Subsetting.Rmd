@@ -1,0 +1,298 @@
+---
+title: "Chapter 3: Subsetting with indexes"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output:
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 3. Subsetting with indexes
+
+- Objects in R can be **subsetted** using **indexes**.
+- R has three classical types of indexing:
+  - **Integer** indexes
+  - **Character** indexes for named objects
+  - **Logical** indexes
+
+## 3. Subsetting with indexes
+
+```{r exampleIndexing}
+v1 <- 5:1
+names(v1) <- c("aa", "bb", "cc", "dd", "ee")
+v1
+v1[2:4]    # Integer indexes
+v1[c("bb", "cc")]    # Character indexes
+v1[c(TRUE, FALSE, FALSE, TRUE, TRUE)]    # Logical indexes
+```
+
+## 3. Subsetting with indexes
+
+- **Negative** integer indexes **deselect** elements.
+- The index **`0`** returns an object of the **same type** but **length zero**.
+
+```{r exampleIntegerIndexing}
+v1[-(2:3)]
+v1[0]
+is.null(v1[0])
+length(v1[0])
+```
+
+## 3. Subsetting with indexes
+
+- **Repeated** integer or character indexes return **duplicated** elements.
+- An index **`NA`** returns `NA`.
+
+```{r exampleSpecialIndexing}
+v1[c(1, 4, 4)]
+v1[c("bb", "bb", "cc")]
+v1[c(1, NA, 5)] # Or: v1[c("aa", NA, "ee")]
+```
+
+## 3. Subsetting with indexes
+
+- Logical indexes are often obtained from **logical expressions**.
+- This is what Matloff (2011: 45) calls "**filtering**".
+- In this context, it is important to use the **single** `&` or `|`, as these operators are **vectorized** (see Chapter 4 and Chapter 6):
+
+```{r exampleBooleanIndexing}
+v1[v1 > 3]
+v1 > 3
+v1[(v1 > 3) & (v1 < 5)]
+```
+
+## 3. Subsetting with indexes
+
+- **Matrices** and **arrays** can take indexes for **each dimension**, separated by comma's:
+
+```{r exampleMatrixIndexing}
+m2 <- matrix(10:1, nrow=2)
+m2
+m2[2, 3:4]   # Idem for character or logical indexes
+m2[, 5]      # Idem for character or logical indexes
+```
+
+- This is possible for the three types of indexing (viz. integer, character and logical).
+
+## 3. Subsetting with indexes
+
+- There are two other options for matrices/arrays:
+  - a single **vector** of integer indexes
+  - a **matrix** of integer indexes
+- Both options always return a **vector** of elements.
+
+## 3. Subsetting with indexes
+
+- A **single index vector** is possible because matrices/arrays are essentially vectors with a `dim` attribute.
+- Hence, we can use the **integer indexes** of that **underlying vector**.
+- This works because the elements in a matrix/array are stored in **column-major order**:
+
+```
+First, all the rows of one column are filled in before
+all the rows of the next column are filled in, etc.
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleMatrixIndexingVector}
+m2
+m2[3]
+m2[c(3, 5)]
+```
+
+## 3. Subsetting with indexes
+
+- An **index matrix** is possible because matrices/arrays have more than one dimension.
+- Hence, we can specify a matrix with:
+  - Number of **rows** = the number of **selected elements**
+  - Number of **columns** = the **dimensionality** of the original matrix/array
+- The index matrix can contain the dimnames as character values.
+- Usually, it is an integer matrix: (see the next slide)
+
+## 3. Subsetting with indexes
+
+```{r exampleMatrixIndexingMatrix}
+m2
+m3 <- matrix(c(2, 1, 2, 3, 4, 5), nrow=3)
+m3
+m2[m3]  # == c(m2[2, 3], m2[1, 4], m2[2, 5])
+```
+
+## 3. Subsetting with indexes
+
+- A common source of errors with **matrices**/**arrays** is that selecting a **single row or column** by default **simplifies** to a **vector**.
+- This simplification can be **avoided** with the argument `drop = FALSE`:
+
+```{r exampleDropIndexing}
+m2
+m2[2,]
+m2[2, , drop = FALSE]
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleDropIndexing2}
+dim(m2[2,])
+dim(m2[2, , drop = FALSE])
+is.matrix(m2[2,])
+is.matrix(m2[2, , drop = FALSE])
+```
+
+## 3. Subsetting with indexes
+
+- **Data frames** are **rectangular** data structures, so they can be indexed like **matrices**:
+
+```{r exampleDFIndexing}
+df <- data.frame(student = c("Jack", "James", "John"), grade = c(70, 80, 40),
+                 pass = c(TRUE, TRUE, FALSE))
+df
+df[2:3, "grade", drop = FALSE]
+```
+
+- Because data frames are essentially lists, however, they can also be indexed like **lists**.
+
+## 3. Subsetting with indexes
+
+- **Lists** can be indexed in three ways:
+
+```{r tableListIndexing, echo = FALSE}
+knitr::kable(
+  data.frame(c("`[ ]`", "`[[ ]]`", "`$`"),
+             c("Integer, character or logical **vector**",
+               "**Single** positive integer or character",
+               "(Unquoted) Character"),
+             c("List", "Vector (or factor)", "Vector (or factor)")
+             ),
+  format = "pandoc",
+  col.names = c("Operator", "Type of index", "Type of result")
+)
+```
+
+&nbsp;
+
+- The first operator (`[ ]`) is related to lists being **recursive** vectors.
+- The last operator (`$`) allows for **partial matching** of the names.
+
+## 3. Subsetting with indexes
+
+```{r exampleListIndexing1}
+lst4 <- list(first = c("c", "d"), second = 2:1, third = c("b", "a"), fourth = 3:4)
+lst4[2:3]
+lst4[c("second", "third")]
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleListIndexing2}
+lst4[2]
+lst4[[2]]
+typeof(lst4[2])
+typeof(lst4[[2]])
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleListIndexing3}
+lst4["second"]
+lst4[["second"]]
+lst4$second
+# Or abbreviated:
+lst4$sec
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleListIndexing4}
+typeof(lst4["second"])
+typeof(lst4[["second"]])
+typeof(lst4$second)
+```
+
+## 3. Subsetting with indexes
+
+- For all data structures it is possible to **replace** elements by combining indexes with **assignment**.
+- This is possible with all three types of indexes (viz. integer, character and logical):
+
+```{r exampleVectorReplacement}
+v1
+v1[1] <- 101
+v1[c("bb", "cc")] <- c(102, 103)
+v1[c(FALSE, FALSE, FALSE, FALSE, TRUE)] <- 105
+v1
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleMatrixReplacement}
+m2
+m2[1, 2] <- 102
+m2[1:2, 5] <- c(501, 502)
+m2
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleDFReplacement}
+df
+df[3, "grade"] <- 10
+df
+```
+
+## 3. Subsetting with indexes
+
+```{r exampleListReplacement}
+lst4$fourth <- c(1000, 999)
+lst4
+```
+
+## 3. Subsetting with indexes
+
+- One **exception** are **factors**: it is not possible to create new levels by overwriting old ones:
+
+```{r exampleFactorReplacement}
+f1 <- factor(c("large", "small", "medium", "large", "medium"),
+             levels = c("small", "medium", "large"), ordered = TRUE)
+f1[4] <- "extra-large"
+f1
+```
+
+- In such a case, the levels of the factor need to be adapted first, and then the assignment can take place (see next slide):
+
+## 3. Subsetting with indexes
+
+```{r exampleFactorReplacement2}
+f2 <- factor(c("large", "small", "medium", "large", "medium"),
+             levels = c("small", "medium", "large"), ordered = TRUE)
+f2
+levels(f2) <- c("small", "medium", "large", "extra-large")
+f2
+f2[4] <- "extra-large"
+f2
+```
+
+## 3. Subsetting with indexes
+
+- Another special case are **list** elements, which can be **removed** by replacing them by `NULL`:
+
+```{r exampleRemoval}
+lst4[4] <- NULL
+lst4[[3]] <- NULL
+lst4$second <- NULL
+lst4
+```
+
+- There is no such possibility for (atomic) vectors.
+
+## 3. Subsetting with indexes
+
+- A special use of the indexing operator `[ ]` is the **empty** index.
+- It allows you to access **all the individual elements** of a data structure **without touching the attributes**:
+
+```{r exampleEmpty}
+df[] <- NA
+df
+```

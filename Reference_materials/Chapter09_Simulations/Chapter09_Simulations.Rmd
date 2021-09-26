@@ -1,0 +1,41 @@
+---
+title: "Chapter 9: Simulations"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 9. Simulations
+
+- Statistical computing is usually synonymous with programming **simulations**.
+- R has **random variate generators** for virtually all **statistical distributions**:
+  - A function prefixed by `r` (instead of `d`, `p` or `q`).
+  - The first argument `n` specifies how many random variates one wants.
+  - The subsequent arguments specify the parameters of the distribution:
+
+```{r exampleRandom}
+rnorm(n = 10, mean = 5, sd = 2)
+rpois(n = 15, lambda= 7)
+```
+
+- See `help(Distributions)`
+
+## 9. Simulations
+
+- The function `replicate()` enables more elaborate simulations:
+  - The first argument `n` (again) specifies the number of replications.
+  - The second argument is an R expression (wrapped in `{ }`) containing several R commands to be replicated:
+
+```{r exampleReplicate}
+replicate(10, {
+  vals <- rnorm(1000)
+  sgnf <- abs(vals) > 2
+  mean(sgnf)
+})
+```

@@ -1,0 +1,577 @@
+---
+title: "Chapter 1: Objects"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output:
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 1. Objects
+
+- 1.1: **Vectors**
+- 1.2: **Vector types**
+- 1.3: **Coercion**
+- 1.4: **"Flatness"**
+- 1.5: **Matrices and arrays**
+- 1.6: **Data frames**
+- 1.7: **Lists**
+
+## 1. Objects
+
+- All computations in R can be understood in terms of **three principles** (Chambers 2016: 4):
+
+```
+1. Everything that exists in R is an object.
+
+2. Everything that happens in R is a function call.
+
+3. Interfaces to other software are part of R.
+```
+
+- These principles are sometimes (respectively) called:
+
+  1. The `Object` principle
+  2. The `Function` principle
+  3. The `Interface` principle
+
+## 1. Objects
+
+- An **object** is a **binding** of a **name** to a certain **value** of a specific **type**.
+- In fact, an object is a binding within a certain **environment**, but we will cover environments in 5.3.
+
+```{r exampleObject}
+x <- 3.5
+```
+
+- The **name** `x` is part of the R language and can be used to refer to the value.
+- The **value** `3.5` is what is stored in the (working) memory of your computer.
+- The **type** is how the value is represented in the (working) memory (and in this case it is `double`).
+
+## 1. Objects
+
+- The three components of an R object mean that all R objects can be differentiated in terms of their **types**.
+- The function to retrieve the type of an object is `typeof()`.
+
+```{r exampleTypes}
+typeof(x)    # 3.5
+y <- "hello"
+typeof(y)
+```
+
+## 1. Objects
+
+- The function `mode()` gives something similar to the type of an object, but uses the terminology of the **S** language:
+   - **S** is the predecessor of **R** (see Chambers 2016: 17-46).
+   - To complicate things futher, there is also the function `storage.mode()`.
+   - See `help(mode)` for the terminological differences.
+- The function `class()` gives the class of an object, but this is altogether different from the type (see Chapter 2):
+  - A class is an external attribute of an object.
+  - A type is the internal representation of an object.
+
+## 1. Objects
+
+- The function `str()` gives the **internal structure** of an R object:
+  - An abbreviation of the type
+  - The first few values
+  - ...
+
+```{r exampleStr}
+str(x)
+str(y)
+```
+
+- The `str()` function is an alternative for the function `summary()`.
+
+## 1. Objects
+
+- Next to types, R objects can also be differentiated in terms of "**data structures**":
+  - Vector
+  - Matrix
+  - Array
+  - Data Frame
+  - List
+  - ...
+- Data structures are a typology in terms of **complexity**.
+- Every R object has only one type, but more complex objects can contain elements of various types.
+
+## 1.1 Vectors
+
+- The most basic data structure in R is a **vector**.
+- Vectors can be created with the function `c()` ("combine").
+- Numeric vectors can also be created with `rep()` or `seq()`.
+
+```{r exampleVectors}
+v1 <- c(3, 1, 2)
+v1
+v2 <- rep(3, times = 5)
+v2
+v3 <- seq(from = 1, to = 10, by = 2)
+v3
+```
+
+## 1.1 Vectors
+
+- Other uses and variants of `rep()`:
+
+```{r exampleRep}
+rep(c(3, 1, 2), each = 2)
+rep(c(3, 1, 2), length.out = 5)
+rep.int(3, times = 5)
+rep_len(c(3, 1, 2), length.out = 5)
+```
+
+## 1.1 Vectors
+
+- Other uses and variants of `seq()`:
+
+```{r exampleSeq}
+seq(from = 1, to = 10, along.with = c(3, 1, 2))
+seq(from = 1, to = 10, length.out = 7)
+seq.int(from = 1, to = 10, by = 2)
+seq_along(c(3, 1, 2))
+seq_len(7)
+```
+
+## 1.1 Vectors
+
+- The `:` operator generates integer sequences with increment 1:
+
+```{r exampleColon}
+1:7
+7:2
+```
+
+- With `seq()`, decreasing sequences require a negative `by` argument:
+
+```{r exampleDecreasing}
+seq(10, 1, by = -2)
+```
+
+## 1.1 Vectors
+
+- The fact that vectors are the most basic data structure means that R has no separate data structure for a single number or "**scalar**"!
+- Scalars are just vectors with one component:
+
+```{r exampleScalar}
+a <- 3.5
+b <- c(3.5)
+a == b
+identical(a, b)
+```
+
+- R is a **vector-based** language.
+
+## 1.2 Vector types
+
+- Vectors are the **most basic** data structure in R because:
+  - They are a "**flat**" i.e. unidimensional data structure.
+  - All its elements need to have the **same type**.
+- These are the possible vector types (Chambers 2016: 98):
+  - `raw`
+  - `logical`  
+  - `integer`
+  - `double`
+  - `complex`
+  - `character`
+  - `list` (!)
+  - `expression`
+
+## 1.2 Vector types
+
+- Vectors of the type `list` are the ordinary R lists.
+- Lists are a vector type because they are **"recursive" vectors**.
+- The usual vectors are called **"atomic" vectors** in R.
+- Atomic vectors can have one of the seven non-list types:
+  - We wil cover all types here except `raw` and `expression`.
+  - Expressions will be dealt with in Chapter 12.
+- **Factors** are not a basic vector type: see 2.2!
+
+## 1.2 Vector types
+
+- R has **two types** for representing **numeric** vectors, just like many other programming languages:
+  - `integer`: encoded with 32 bits.
+  - `double` or "**double-precision floating point numbers**": encoded with 64 bits.
+- The `integer` type is created with a **suffix** `L`, **otherwise** the type is `double`:
+
+```{r exampleNumeric}
+v1 <- c(3, 1, 2)
+typeof(v1)
+v2 <- c(3L, 1L, 2L)
+typeof(v2)
+```
+
+- The `double` type corresponds to the **class** `numeric` (see Chapter 2).
+
+## 1.2 Vector types
+
+- R has a special type for (vectors of) **complex numbers**.
+- Attaching an `i` to a number creates a complex number:
+
+```{r exampleComplex}
+5i
+v3 <- c(5i, 6 + 4i, 12 + 0i)
+v3
+typeof(v3)
+typeof(12 + 0i)
+```
+
+## 1.2 Vector types
+
+- **Character vectors** are created by **wrapping** the elements between **quotation marks**:
+
+```{r exampleCharacter}
+v4 <- c("hello", 'world')
+v4
+typeof(v4)
+```
+
+- **Single** or **double** quotation marks are the same, as long as you are consistent.
+
+## 1.2 Vector types
+
+- The values `TRUE` and `FALSE` are **logical values** in R and **logical vectors** are made up of them:
+
+```{r exampleLogical}
+typeof(FALSE)   # Idem for typeof(TRUE)
+v5 <- c(TRUE, TRUE, FALSE)
+v5
+typeof(v5)
+```
+
+- `TRUE` and `FALSE` can be abbreviated to `T` and `F` respectively, but this may cause **confusion** when `T` and `F` are the names of other objects!
+
+## 1.2 Vector types
+
+- The **missing value** `NA` has type `logical`.
+- However, it **adapts** to the type of the other elements in a vectors:
+
+```{r exampleNA}
+typeof(NA)
+v6 <- c(3, 1, NA)
+typeof(v6)
+```
+
+- This adaptation is a consequence of **coercion** (see 1.3).
+
+## 1.2 Vector types
+
+- In order to differentiate missing values from **inadmissible calculations**, R has the value `NaN` ("Not a Number"):
+
+```{r exampleNaN}
+typeof(NaN)
+v7 <- c(5, -5, 0) / 0
+v7
+typeof(v7)
+```
+
+- See also: https://en.wikipedia.org/wiki/NaN
+
+## 1.2 Vector types
+
+- The value `NULL` stands for a **nonexistent** value.
+- It is different from a missing value `NA`, because `NA` represents **unknown** values (which may still exist):
+
+```{r exampleNULLvalue}
+v8 <- c(3, NULL, 1)
+v9 <- c(3, NA, 2)
+v8
+v9
+length(v8)
+length(v9)
+```
+
+## 1.2 Vector types
+
+- An object with the value `NULL` is literally **a name without a value**.
+- That is why such an object also has **no type**:
+
+```{r exampleNULLtype}
+v10 <- NULL
+v10
+exists("v10")
+typeof(v10)
+```
+
+## 1.2 Vector types
+
+- Th `NULL` object can also be created as an **empty vector** (without a type):
+
+```{r exampleNULLempty}
+v11 <- c()
+v11
+length(v11)
+```
+
+- The `NULL` object always has **length zero** (because it does not have a value).
+- Empty vectors of a certain length and a specific type can be created the function `vector()` (see 1.4).
+
+## 1.3 Coercion
+
+- If you **combine** elements of **different types** into a vector, the R will **coerce** all values into a **common type**.
+- The order of coercion is (the symbol `<` means "will be coerced into"):
+
+```
+raw < logical < integer < double < complex < character < list < expression
+```
+
+- We will focus on:
+
+```
+logical < integer < double < character
+```
+
+## 1.3 Coercion
+
+```{r exampleCoercion}
+v12 <- c(3, FALSE)
+v12
+typeof(v12)
+v13 <- c(TRUE, "world")
+v13
+typeof(v13)
+```
+
+## 1.3 Coercion
+
+- Coercion means that **mathematical** functions can conveniently be applied to (logical) vectors of **Boolean values**:
+
+```{r exampleBoolean}
+sum(c(TRUE, TRUE, TRUE, FALSE, FALSE))
+mean(c(TRUE, TRUE, TRUE, FALSE, FALSE))
+```
+
+- Coercion can also be done manually with the family of `as.XXX()` functions, but these can also change **classes** (see Chapter 2).
+
+## 1.3 Coercion
+
+- QUESTION: what happens precisely with the logical value `NA`?
+
+```{r copyNA}
+c(3, 1, NA)
+typeof(c(3, 1, NA))
+```
+
+## 1.3 Coercion
+
+- QUESTION: what precisely happens with the logical value `NA`?
+
+```{r copyNA2, ref.label = "copyNA"}
+
+```
+
+- ANSWER: `NA` is coerced into one of the following internal types:
+  - `NA_integer_`
+  - `NA_real_`
+  - `NA_character_`
+  - ...
+- Users do not need to use these directly (R handles everything automatically).
+
+## 1.4 "Flatness"
+
+- Finally, the fact that vectors are a "flat", unidimensional data structure means that vectors have **two intrinsic properties**:
+  - Type (or "Mode")
+  - Length
+- That is also why **empty vectors** can be created with the function `vector()` by the type and length:
+
+```{r exampleEmptyVector}
+v14 <- vector(mode = "double", length = 4)
+v14
+```
+
+## 1.5 "Flatness"
+
+```{r exampleEmptyVector2}
+v15 <- vector(mode = "character", length = 3)
+v15
+```
+
+- The term "mode" is taken over from the **S** language (see before).
+- Such empty vectors are usually a good a idea to start an **iterated computation** (see Chapter 9).
+
+## 1.4 "Flatness"
+
+- The "flatness" of vectors also means that combing them with `c()` never produces a nested vector:
+
+```{r exampleFlatness}
+v16 <- c(3, c(1, 2), 5)
+v16
+length(v16)
+```
+
+- That will be different for **lists** (see 1.7).
+
+## 1.5 Matrices and arrays
+
+- **Matrices** are **two-dimensional** generalizations of vectors.
+- All elements need to have the **same type**.
+- They can be made with the functions `rbind()`, `cbind()` or `matrix()`:
+
+```{r exampleMatrix1}
+m1 <- rbind(c(TRUE, FALSE, FALSE), c(3, 1, 2))
+m1
+m2 <- cbind(c("a", "b"), c(3, -4), c(FALSE, TRUE))
+m2
+```
+
+## 1.5 Matrices and arrays
+
+```{r exampleMatrix2}
+m3 <- matrix(15:1, nrow=3)
+m3
+m4 <- matrix(c("what", "shall", "we", "do", "with", "the", "drunken", "sailor"),
+             ncol=4)
+m4
+```
+
+## 1.5 Matrices and arrays
+
+- **Arrays** are generalizations of vectors to **three or more** dimensions.
+- They can be made with the function `array()` which takes an argument `dim`:
+
+```{r exampleArray1}
+a1 <- array(30:1, dim=c(3, 5, 2))
+a1
+```
+
+## 1.5 Matrices and arrays
+
+```{r exampleArray2}
+a2 <- array(c("early", "in", "the", "morning", FALSE, TRUE, 10:1), dim=c(2, 4, 2))
+a2
+```
+
+## 1.5 Matrices and arrays
+
+- Matrices and arrays are essentially **vectors** with an extra/external **attribute** `dim`.
+- That is why matrices and arrays can also be created by **assigning** a `dim` attribute to a vector:
+
+```{r exampleDim1}
+v1 <- 10:1
+v1
+dim(v1) <- c(2, 5)
+v1
+is.matrix(v1)
+```
+
+## 1.5 Matrices and arrays
+
+```{r exampleDim2}
+v2 <- c("what", "shall", "we", "do", "with", "the", "drunken", "sailor",
+        "early", "in", "the", "morning")
+v2
+dim(v2) <- c(2, 3, 2)
+# Continued on the next slide
+```
+
+## 1.5 Matrices and arrays
+
+```{r exampleDim2_2}
+v2
+is.array(v2)
+```
+
+## 1.5 Matrices and arrays
+
+- Ordinary vectors have no `dim` attribute.
+- Hence, you can always **flatten** a matrix or an array by setting its `dim` attribute to `NULL`:
+
+```{r exampleFlatten}
+v3 <- c("hello", "world")
+dim(v3)
+dim(v2) <- NULL
+v2
+dim(v1) <- NULL
+v1
+```
+
+## 1.6 Data frames
+
+- **Data frames** are **rectangular** data structures like matrices, but they allow for columns with **different types**.
+- Data frames are the default data structure for (read-in) **datasets**.
+- The can be created with the function `data.frame()` but we will deal with that in 2.1.
+
+```{r exampleIris}
+head(iris)
+is.data.frame(iris)
+```
+
+## 1.6 Data frames
+
+- Internally, data frames are stored as **lists**:
+
+```{r exampleTypeIris}
+typeof(iris)
+```
+
+- What makes the list a data frame is that it has a **class** attribute `data.frame` (see 2.1).
+
+## 1.7 Lists
+
+- **Lists** are the **most flexible** data structure in R: they can have elements of **any type** and **any length**.
+- They can be made with the function `list()`:
+
+```{r exampleList}
+lst1 <- list(c(3, 1, 2), c(TRUE, FALSE), c("early", "in", "the", "morning"))
+lst1
+```
+
+## 1.7 Lists
+
+- Remember, lists are **recursive vectors** in R:
+
+```{r exampleRecursiveVector}
+typeof(lst1)
+is.list(lst1)
+is.vector(lst1)
+```
+
+- This has two consequences:
+  - Lists can be **nested**, i.e. they can themselves contain lists.
+  - Empty lists can be made with `vector()`, setting the mode/type equal to `"list"`.
+
+## 1.7 Lists
+
+```{r exampleNestedList}
+lst2 <- list(c("hello", "world"), list(5:1, c(FALSE, TRUE)))
+lst2
+lst3 <- list(list(list("hi")))
+lst3
+```
+
+## 1.7 Lists
+
+```{r exampleEmptyList}
+lst4 <- vector(mode = "list", length = 4)
+lst4
+```
+
+- Just like empty vectors, empty lists can be a useful starting point for **iterated computations**.
+- In fact, many simulations make use of them.
+
+## 1.7 Lists
+
+- Lists being recursive vectors also explains the behavior of `c()`.
+- QUESTION: Why does the following code not produce a nested list of two sublists?
+
+```{r exampleListCombine}
+lst5 <- c(list(c("c", "d"), 2:1), list(c("b", "a"), 3:4))
+lst5
+```
+
+## 1.7 Lists
+
+- The `c()` function also has an argument `recursive` with which you can specify to **apply** the function recursively:
+
+```{r exampleRecursiveCombine}
+lst6 <- list(c("c", "d"), 2:1)
+lst7 <- list(c("b", "a"), 3:4)
+lst8 <- c(lst6, lst7, recursive = TRUE)
+lst8
+```
+
+- The name of the argument is somewhat paradoxical, since the **outcome** of any recursive application is, of course, itself **never recursive**.

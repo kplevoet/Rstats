@@ -1,0 +1,359 @@
+---
+title: "Chapter 13: Object-oriented programming"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 13. Object-oriented programming
+
+- 13.1: **S3**
+- 13.2: **S4**
+- 13.3: **RC**
+
+## 13. Object-oriented programming
+
+- R has three important systems for **object-oriented programming (OOP)**:
+  - **S3**
+  - **S4**
+  - **RC**
+- The fullest, technical account of OOP in R is part III (pp. 129-240) of Chambers, John (2016) _Extending R_.
+
+## 13. Object-oriented programming
+
+- Chambers (2016) calls the **S3** and **S4** systems **functional OOP** because both systems just extend **R functions**:
+  - R is essentially a **functional programming language**.
+  - This is also why Chambers (2016: 7) calls R an **object-based** programming language (instead of an **object-oriented** programming language).
+- The **RC** system is a full-blown **object-oriented** system, which is why Chambers (2016) refers to it as **encapsulated OOP**.
+
+## 13.1 S3
+
+- The **S3** system is:
+  - the oldest
+  - the easiest
+  - the most flexible
+  - still the most often used
+- The reason is that everything happens with **R functions**.
+- The flexibility also means that R will **not** raise a warning or error if you do something "non-OOP"!
+
+## 13.1 S3
+
+- Remember from Chapter 2 that **classes** can simply be created by assigning a value to the `class` attribute:
+
+```{r exampleClassS3}
+obj8 <- c(70, 30, 40, 60, 80)
+class(obj8) <- "frabjous"
+obj8
+```
+
+- Instances of such classes are usually created within a function (e.g. the following pseudo-code):
+
+```{r exampleConstructorS3, eval=FALSE}
+someFunction <- function(x, y, ...) {
+  # Some computations
+  class(out) <- "frabjous"
+  out
+}
+```
+
+## 13.1 S3
+
+- Another way of designing such a **class constructor function** is with `structure()` (again, pseudo-code):
+
+```{r exampleConstructor2S3}
+someFunction <- function(x, y, ...) {
+  # Some computations
+  structure(out, class = "frabjous")
+}
+```
+
+- Apart from this, there are no other requirements on the properties of **S3** classes:
+  - In other words, "**S3 classes do not have a formal class definition**".
+  - This contrasts with both **S4** and **RC** (see later).
+
+## 13.1 S3
+
+- With these classes, we can define **methods**:
+  - These are **functions** which do some computation on the (data of the) class instance.
+  - They are **particular to the class**.
+- In order to use methods, we first need a **generic** function:
+  - We can use an existing R generic if we want to adapt it for our class: e.g. `print()`, `summary()` etc.
+  - We can create a new generic (see the next slide).
+
+## 13.1 S3
+
+- A **generic** function, or "generic" in short, always has the same definition:
+  - We can choose its name ourselves (e.g. here we choose `pass()`).
+  - Its body just needs to contain the function `UseMethod()` with the **generic name** again as its argument:
+
+```{r exampleGenericS3}
+pass <- function(x, ...) UseMethod("pass")
+```
+
+- The function `UseMethod()` does **method dispatch** in R:
+  - It will look for a **function** which starts with the same name as the name between brackets (viz. `pass`).
+  - But, it should have a specific definition for the **class** of argument `x`.
+- This other function is the actual **method**.
+
+## 13.1 S3
+
+- A **method** is a function with a specific **function name**:
+  - Its **first part** is the name of the **generic** (e.g. `pass`)
+  - Then there is a **dot** (`.`).
+  - Its **last part** is the name of the **class** (e.g. `frabjous`).
+- The **body** of the methods contains the actual computational commands.
+- E.g. a method which returns `TRUE` if a value is higher than or equtal to 50 and `FALSE` otherwise:
+
+```{r exampleMethodS3}
+pass.frabjous <- function(x) {
+  x >= 50
+}
+```
+
+## 13.1 S3
+
+- With such a method, we do not have to type the part after the dot (`.`), but we can just type the generic:
+
+```{r exampleDispatchS3}
+pass(obj8)
+```
+
+- What happens, is:
+  - Our call `pass(obj8)` executes the **generic** `pass()`.
+  - The **generic** `pass()` executes the command `UseMethod("pass")`.
+  - The command `UseMethod("pass")` performs **method dispatch**: it will (make R) look for another function starting with `pass` followed by a `.` followed by the class name of (formal) argument `x`, viz. `frabjous`.
+  - Since we have defined the function `pass.frabjous()`, R finds it and executes it.
+
+## 13.2 S4
+
+- The **S4** system is available in the core package **methods**.
+- **S4** requires you to create a **formal class definition**.
+- Hence, you can never create a class instance that does not have all the necessary attributes.
+- This is **less flexible** but **safer** than **S3**.
+
+## 13.2 S4
+
+- An **S4 class definition** is made with the function `setClass()`:
+  - Its first argument specifies the **name** of the new class.
+  - Its second argument `slots` specifies the **names** and **types** of the **attributes** of the class (called "**slots**").
+  - Its optional third argument `contains` specifies the (super)class from which this new class will **inherit**.
+- E.g a class `frabjous` with one (new) slot `callooh` and inheriting from `numeric`:
+
+```{r exampleSetClassS4, warning=FALSE}
+library(methods)
+setClass("frabjous", slots = c(callooh = "character"), contains = "numeric")
+```
+
+## 13.2 S4
+
+- You can also create a **class constructor** by using `setClass()` with **assignment**.
+- It is good practice use the **same name** for the class and the class constructor:
+
+```{r exampleConstructorS4}
+frabjous <- setClass("frabjous", slots = c(callooh = "character"), contains = "numeric")
+frabjous
+```
+
+## 13.2 S4
+
+- After the class definition, you can create **class instances**, i.e. objects of the class:
+  - With the class constructor
+  - With the function `new()`
+- With the class constructor:
+  - You need to specify a value to every slot.
+  - If the class inherits from another class, then the data values can be specified as the first argument:
+
+```{r exampleInstanceS4}
+obj9 <- frabjous(c(30, 40, 70, 70, 90), callooh = "callay")
+obj9
+```
+
+## 13.2 S4
+
+- If you did not create a class constructor (with assignment), then you can always use the function `new()`.
+- Everything remains the same except that you specify the class name as the first argument:
+
+```{r exampleNewInstanceS4}
+obj10 <- new("frabjous", c(80, 80, 40), callooh = "noway")
+obj10
+```
+
+- Of course, all values need to be of the proper type!
+
+## 13.2 S4
+
+- The values in the individual slots can be accessed:
+  - With the operator `@`
+  - With the function `slot()`
+
+```{r exampleSlotS4}
+obj9@callooh
+slot(obj10, "callooh")
+```
+
+- In other words, `@` for **S4** objects is the same as `$` for **lists** or **environments**.
+- The data values can be accessed with the special name `.Data`:
+
+```{r exampleDataS4}
+obj9@.Data
+```
+
+## 13.2 S4
+
+- **Generics** and **methods** for **S4** classes can be created with the functions `setGeneric()` and `setMethod()`, respectively.
+- An **S4 generic** is the combination of a **name** and a function for **method dispatch**:
+  - Its first argument specifies the **name** of the generic.
+  - Its second argument specifies an **anonymous** function containing the function `standardGeneric()` in its body (with the name of the generic again as its argument).
+
+```{r exampleGenericS4}
+setGeneric("pass2", function(x) standardGeneric("pass2"))
+```
+
+- In other words, `standardGeneric()` does for **S4** what `UseMethod()` does for **S3** (viz. **method dispatch**).
+
+## 13.2 S4
+
+- The `setMethod()` function for creating **S4 methods** takes three arguments:
+  - Its first argument needs to specify the **same name** as the **generic**.
+  - Its second argument `signature` specifies the **name** of the **class**.
+  - Its third argument `definition` specifies the **function**.
+- E.g. A method that returns `TRUE` when the data values are higher than or equal to 50 and `FALSE` otherwise:
+
+```{r exampleMethodS4}
+setMethod("pass2", "frabjous", function(x) x > 50)
+```
+
+## 13.2 S4
+
+```{r exampleSummaryS4}
+pass2(obj9)
+# Compare:
+obj9
+```
+
+- This shows that **S4** methods are **R functions**:
+  - They are **used** as functions and return **another object**.
+  - They do **not modify** the **S4** object (viz. `obj9`) itself.
+- That is the difference with **RC** objects (see the next slide).
+
+## 13.3 RC
+
+- The **RC** system (short for "**reference classes**") is also available in the **methods** package.
+- **RC**'s are a combination of **S4 classes** and **environments**.
+- That gives rise to a full-fledged **object-oriented** system (which Chambers 2016 calls **encapsulated OOP**):
+  - **RC** methods belong to **objects**, not functions.
+  - **RC** objects are **mutable**: operations do not create a copy of the object but **modify** the object itself.
+
+## 13.3 RC
+
+- **RC**'s are made with the function `setRefClass()`.
+- One difference with **S4** classes is that `slots` are called `fields` in **RC**.
+- Another difference is that all fields must be declared:
+
+```{r exampleClassRC, warning=FALSE}
+library(methods)   # If not loaded yet
+frabjousRC <- setRefClass("frabjousRC",
+                          fields = c(data = "numeric", callooh = "character"))
+```
+
+- **RC**'s are typically made with a **class constructor**, which already has some predefined methods (see the next slide).
+
+## 13.3 RC
+
+```{r exampleConstructorRC}
+frabjousRC
+```
+
+## 13.3 RC
+
+- **Instances** of **RC**'s are made with the predefined method `$new()`.
+- Note the `$` operator:
+
+```{r exampleInstanceRC}
+obj11 <- frabjousRC$new(data = c(40, 60, 60, 40, 70), callooh = "callay")
+obj11
+```
+
+## 13.3 RC
+
+- The values in individual fields can be accessed:
+  - With the `$` operator
+  - with the method `$field()`:
+
+```{r exampleFieldRC}
+obj11$data
+obj11$field("callooh")
+```
+
+- There is **no function** `fields()` because that would go against the idea of encapsulated OOP.
+
+## 13.3 RC
+
+- **RC**'s are built on **environments**.
+- That means that they use **reference semantics** (see 5.3):
+  - If you modify a **copy** an **RC** object, then automatically also modify the **original** object.
+  - This makes **RC** objects **mutable**:
+  
+```{r exampleMutableRC}
+obj12 <- obj11
+obj12$"callooh" <- "noway"
+obj11
+```
+
+- If you want a separate object, then you have to use the method `$copy()`.
+
+## 13.3 RC
+
+- In line with encapsulated OOP, **RC methods** are created in the **class definition**, i.e. in the function `setRefClass()`.
+- More specifically, **RC** methods are specified as a list to the argument `methods`.
+- We also have to change the definition somewhat:
+  - Because the data values a field (`data`) in our class (`frabjous`), we do **not** require them as a **formal argument**.
+  - Instead, we specify the field in the body:
+
+```{r exampleMethodRC}
+frabjousRC <- setRefClass("frabjousRC",
+                          fields = c(data = "numeric", callooh = "character"),
+                          methods = list(pass = function () data >= 50))
+```
+
+## 13.3 RC
+
+```{r exampleMethodResultRC}
+obj11$pass()
+# Compare:
+obj11
+```
+
+## 13.3 RC
+
+- Reference semantics also allow for **methods** which **modify** the **RC** object itself, i.e. illustrate **mutability**.
+- Such methods require the use of the `<<-` operator in their body (see 5.2).
+- E.g. a method which adds `x` to every value in `data`:
+
+```{r exampleMutableMethodRC}
+frabjousRC <- setRefClass("frabjousRC",
+                          fields = c(data = "numeric", callooh = "character"),
+                          methods = list(pass = function () data >= 50,
+                                         add = function(x) data <<- data + x))
+```
+
+## 13.3 RC
+
+```{r exampleMutableMethodResultRC}
+obj11$add(x = 1)
+obj11
+```
+
+## 13. Object-oriented programming
+
+- Despite its quirkiness, **S3** is still used most often.
+- Use **S4** if you have many classes and methods and you want to avoid problems.
+- Use **RC** if you are accustomed to object-oriented programming:
+  - Mutable objects are in fact **side effects** (see 5.2).
+  - **Functional OOP** (of **S3** and **S4**) naturally follows the typical flow of a data analysis project.

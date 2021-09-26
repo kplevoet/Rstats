@@ -1,0 +1,173 @@
+---
+title: "Chapter 12: Computing on the language"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 12. Computing on the language
+
+- In line with Chambers' `Object` principle, **R commands** can **themselves** be treated as R objects.
+- Such objects can be made with the function `quote()`, which returns an **unevaluated expression**:
+
+```{r exampleQuote}
+obj1 <- quote(1 + 2)
+obj1
+```
+
+- These can then be evaluated with function `eval()` to produce the return value:
+
+```{r exampleEval}
+eval(obj1)
+```
+
+- The `eval()` function has some arguments to specify **environments**: see later.
+
+## 12. Computing on the language
+
+- The **type** of an unevaluated expression depends on what it refer to:
+  - A **name** of (another) object has type `symbol`.
+  - A **call** to a function has type `language`.
+
+- Its **class** is simply another name for its type:
+  - A **name** of (another) object has class `name`.
+  - A **call** to a function has class `call`.
+
+## 12. Computing on the language
+
+```{r exampleExpressionTypes}
+typeof(obj1)
+class(obj1)
+obj2 <- quote(bb)
+obj2
+typeof(obj2)
+class(obj2)
+```
+
+## 12. Computing on the language
+
+- The general term for names and calls is **expression**.
+- There is a link with expressions made with the function `expression()`:
+  - Remember from 1.2 that these are **vectors** of type `expression`.
+  - More precisely, they are **recursive vectors** (like **lists**).
+  - In fact, expressions are recursive vectors of names, calls and (sub)expressions.
+
+## 12. Computing on the language
+
+- Every R expression can be converted to a **list**:
+
+```{r exampleAsList}
+lst1 <- as.list(obj1)
+lst1
+```
+
+- The **nesting** of the list represents the (recursive) structure of the expression:
+  - The first list component is the **name** of the **function**.
+  - The next list component**s** are the **arguments** of the function.
+  - More complex expressions are represented with **sublists**.
+
+## 12. Computing on the language
+
+- Conversion to lists allows for the **editing** of expressions.
+- Such a list can be converted (back) to an expression with `as.call()`:
+
+```{r exampleEditedAsCall}
+lst1[[3]] <- 3
+obj3 <- as.call(lst1)
+obj3
+eval(obj3)
+```
+
+- Conversion to name objects can be done with the functions:
+  - `as.name()`.
+  - `as.symbol()`
+
+## 12. Computing on the language
+
+- Expressions can be built with **variables**, i.e. **names** which are bound elsewhere:
+
+```{r exampleVariableExpression}
+obj4 <- quote(aa + 3)
+obj4
+```
+
+- If such a name is bound, then `eval()` can compute its return value:
+
+```{r exampleVariableEval}
+aa <- 5
+eval(obj4)
+```
+
+## 12. Computing on the language
+
+- By default, `eval()` looks in its **calling environment** for bindings (i.e. the environment in which `eval()` itself was called).
+- However, the environment can also be specified with the argument `envir`.
+- This allows for evaluating expressions in any chosen environment:
+
+```{r exampleEvalEnvir}
+env4 <- new.env()
+env4$aa <- 7
+ls.str(env4)
+eval(obj4, envir = env4)
+```
+
+- This is called **non-standard evaluation (NSE)**.
+
+## 12. Computing on the language
+
+- Because environments have essentially the same syntax as lists, non-standard evaluation can also be done as follows:
+
+```{r exampleEvalList}
+eval(obj4, envir = list(aa = 7))
+```
+
+- This works because the list is (automatically) converted to an environment with the function `list2env()`.
+
+## 12. Computing on the language
+
+- If `eval()` does not find a binding in `envir`, then it will look in the **parent** of `envir`.
+- Remember (from 5.3) that this is the environment in which `envir` was **created**.
+- If any other environment is preferred, then it can be specified as the third argument `enclos`.
+
+## 12. Computing on the language
+
+- The function `substitute()` changes one expression into another by replacing **names** by **values**.
+- The **bindings** of names to values need to specified as an environment to the argument `env`:
+
+```{r exampleSubstitute}
+obj5 <- substitute(aa + bb, env = list(aa = 3, bb = 5)) # Also uses 'list2env()'.
+obj5
+eval(obj5)
+```
+
+- Note that the first argument of `substitute()` needs to be an **unquoted** expression (i.e. just the expression itself without the `quote()` function)!
+
+## 12. Computing on the language
+
+- The function `parse()` converts a **string** to an (unevaluated) **expression**.
+- The first argument of the `parse()` function is `file` (for reference to scripts), so a single string needs to be specified with the argument `text`:
+
+```{r exampleParse}
+obj6 <- parse(text = "3 + 4")
+obj6
+eval(obj6)
+```
+
+- The execution of an R script (e.g. with `source()`) in fact applies `parse()` to the output of `readLines()` (followed by `eval()`). 
+
+## 12. Computing on the language
+
+- The function `deparse()` reversely converts **expressions** to **strings**:
+
+```{r exampleDeparse}
+str7 <- deparse(quote(4 + 5))
+str7
+```
+
+- Such strings can then be processed with **regular expressions** (see 11.2).

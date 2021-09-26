@@ -1,0 +1,48 @@
+---
+title: "Chapter 15: Performance: speed and memory"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+## 15. Performance: speed and memory
+
+- The performance of R computations can be an issue because R stores many objects in **working memory**: see `help(Memory)`.
+- There are some functions which help you measure performance:
+  - The function `system.time()` returns the **execution time** of R code.
+  - The function `object.size()` returns the **byte size** of an R object.
+- For very heavy computations, you can make use of some R packages.
+
+## 15. Performance: speed and memory
+
+```{r exampleSystemtime1}
+obj17 <- 1:100000
+```
+
+```{r exampleSystemtime2, eval=FALSE}
+# E.g. comparison between a 'for' loop and 'lapply()':
+system.time(
+  for (i in obj17) {
+    print(i)
+  }
+)
+# Output not shown
+
+system.time(
+  lapply(obj17, print)
+)
+# Output not shown
+```
+
+## 15. Performance: speed and memory
+
+```{r exampleObjectsize}
+object.size(obj17)
+```
+
+## 15. Performance: speed and memory
+
+- The packages **snow** and **parallel** enable you to **parallelize** your computing.
+- The package **Rcpp** provides an interface to **C++**.

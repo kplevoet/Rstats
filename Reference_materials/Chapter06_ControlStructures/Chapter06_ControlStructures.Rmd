@@ -1,0 +1,177 @@
+---
+title: "Chapter 6: Control structures"
+author: "Koen Plevoets"
+date: "26-09-2021"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, highlight = FALSE)
+```
+
+## 6. Control structures
+
+- Most people know `if`, `for` and `while`.
+- We will cover some additional features.
+
+## 6. Control structures
+
+- An `if` statement executes code if a certain logical expression is `TRUE`:
+
+```{r exampleIf}
+v1 <- 3
+if (v1 > 2) {
+  print("hello!")
+}
+if (v1 <= 2) {
+  print("nope!")
+} 
+```
+
+- It can be but does not have to combined with an `else` statement.
+
+## 6. Control structures
+
+```{r exampleIf2}
+# Compare:
+v1 <- 2
+if (v1 > 2) {
+  print("hello!")
+} else {
+  print("nope!")
+} 
+
+```
+
+## 6. Control structures
+
+- A `for` loop iterates over the elements in a vector (atomic or recursive).
+- The iteration can be done directly on the elements or by means of indexes:
+
+```{r exampleFor}
+v2 <- c(2, 1, 3, 11, 10)
+for (i in v2) {
+  print(i)
+}
+```
+
+## 6. Control structures
+
+```{r exampleFor2}
+# Compare:
+v2 <- c(2, 1, 3, 11, 10)
+for (i in 1:length(v2)) {
+  print(v2[i])
+}
+```
+
+## 6. Control structures
+
+- A `while` loop is the combination of an `if` statement and a `for` loop.
+- Pay attention not to create an eternal loop!
+
+```{r exampleWhile}
+v2 <- c(2, 1, 3, 11, 10)
+i <- 1
+while (v2[i] < 11) {
+  print(v2[i])
+  i <- i + 1
+}
+```
+
+## 6. Control structures
+
+- The statements `break` or `next` enable control over `for` and `while` loops :
+  - A `break` statement breaks out of the loop.
+  - A `next` statement goes to the next step in the iteration:
+
+```{r exampleBreakNext}
+v2 <- c(2, 1, 3, 11, 10)
+for (i in v2) {
+  if (i == 11) {
+    break
+  }
+  if (i == 1) {
+    next
+  }
+  print(i)
+}
+```
+
+## 6. Control structures
+
+- A `break` (and `next`) expression can also be used in a `repeat` loop.
+- This is equivalent to a `while` loop:
+
+```{r exampleRepeat}
+v2 <- c(2, 1, 3, 11, 10)
+i <- 1
+repeat {
+  print(v2[i])
+  i <- i + 1
+  if (v2[i] >= 11) {
+    break
+  }
+}
+```
+
+## 6. Control structures
+
+- The logical expressions in `if` statements and `while` loops can be combined with **Boolean operators**.
+- These need to be the **double** operators `&&` or `||`:
+  - Control structures such as `if` or `while` can only handle **single** `TRUE` or `FALSE` values, not vectors.
+  - The double operators are **not vectorized**:
+
+```{r exampleDoubleBoolean}
+v3 <- 2
+v4 <- 11
+if (v3 < 3 && v4 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+```{r exampleDoubleBoolean2}
+v3 <- 2
+v4 <- 11
+if (v3 == 3 || v4 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+- QUESTION: why does the following code not produce an error?
+
+```{r exampleLazyDouble}
+v5 <- 3
+if (v5 == 3 || v6 > 10) {
+  print("hello!")
+}
+```
+
+## 6. Control structures
+
+- QUESTION: why does the following code not produce an error?
+
+```{r exampleLazyDouble2, ref.label="exampleLazyDouble"}
+
+```
+
+- Boolean operators also make use of **lazy evaluation**.
+
+## 6. Control structures
+
+- In accordance with the `Function` principle, control structures correspond to underlying functions:
+
+```{r exampleControlFunctions}
+v5 <- 2
+`if`(v5 == 2, { print("hello!") })
+`if`(v5 == 3, { print("hello!") })
+
+v6 <- c(2, 1, 3, 11, 10)
+`for`(i, 1:length(v6), { print(v6[i]) })
+```
