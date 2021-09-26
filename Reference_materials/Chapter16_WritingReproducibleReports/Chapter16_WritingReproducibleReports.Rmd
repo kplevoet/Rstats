@@ -427,4 +427,4 @@ knitr::include_graphics("rmarkdownflow.png")
   - Presentations
   - Websites
   - ...
-- E.g. The source files for this course are available on [my Github page](https://github.com/kplevoet/Rstats/Reference_materials).
+- E.g. The source files for this course are available on [my Github page](https://github.com/kplevoet/Rstats).
